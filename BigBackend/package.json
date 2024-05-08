@@ -1,0 +1,12 @@
+{
+  "name": "bigbackend",
+  "version": "1.0.0",
+  "description": "I will be doing a project in this folder",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
