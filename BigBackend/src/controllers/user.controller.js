@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 const registerUser = asyncHandler(async (req, res) => {
+  
   // get the information from the frontend.
   // validation kahi koi filed empty toh nhi h
   //check if user exist toh nhi karta.
@@ -18,7 +19,6 @@ const registerUser = asyncHandler(async (req, res) => {
 //   Validation Begins
 
   const { fullname, username, email, password } = req.body;
-  console.log("email:", email);
   if (fullname === "") {
     throw new ApiError(404, "FullName is required");
   }
@@ -30,7 +30,7 @@ const registerUser = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(400, "All fields are required");
   }
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
   if (existedUser) {
@@ -68,5 +68,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
 });
+const loginUser=asyncHandler(async (req,res)=>{
+  // todoss
+  // 
+} )
 
-export { registerUser };
+export { registerUser,loginUser };
