@@ -2,6 +2,9 @@
 require('dotenv').config()
 const express = require('express')
 const app = express()
+const mongoose=require("mongoose");
+const Tea=require("./models/teas.models.js");
+const db=require("./db.js")
 
 
 app.use(express.json());
@@ -17,19 +20,28 @@ app.get("/twitter",(req,res)=>{
 })
 
 
-let teaShop=[];
-let nextId=1;
+// let teaShop=[];
+// let nextId=1;
 
 // to add a new tea
-app.post("/teas",(req,res)=>{
-  const {name,price}=req.body;
-  const newTea={id:nextId++,name,price};
-  teaShop.push(newTea);
-  res.status(201).send(newTea);
-})
+app.post('/teas', async (req, res) => {
+  try {
+    const { type, price } = req.body;
+    const newTea = await Tea.create({ type, price });
+    res.status(201).send(newTea);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
 // to get all the teas
-app.get("/teas",(req,res)=>{
-  res.send(teaShop);
+app.get("/teas",async(req,res)=>{
+  try {
+    const teas =await Tea.find();
+    res.send(teas);
+  } catch (error) {
+    res.status(500).send(error.message)
+    
+  }
 })
 // to get a tea by id
 app.get("/teas/:id",(req,res)=>{
