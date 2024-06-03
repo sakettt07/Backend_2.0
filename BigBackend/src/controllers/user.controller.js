@@ -159,4 +159,6 @@ const logoutUser=asyncHandler(async(req,res)=>{
 
 })
 
+
+// will performing the generate token 
 export { registerUser,loginUser ,logoutUser };
