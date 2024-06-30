@@ -21,7 +21,7 @@ const generateAccessAndRefereshTokens = async(userId) =>{
       throw new ApiError(500, "Something went wrong while generating referesh and access token")
   }
 }
-
+// register user logic
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
   // validation - not empty
@@ -95,6 +95,7 @@ const registerUser = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
+// existing user can login logic
 const loginUser = asyncHandler(async (req, res) => {
   // todoss
   // take the data from the req.body (form on the frontend)
@@ -149,14 +150,14 @@ const loginUser = asyncHandler(async (req, res) => {
       )
     );
 });
-
+// user can loggout of the application.
 const logoutUser = asyncHandler(async (req, res) => {
   // todos to logout a user
   // find the user by the id bu the prob is from where we get the ID
   // delete its cookies as they are of no use when logged out
   // remove the refresh token from the DB as we will be assingning him the new when he will login again.
   // finally he will be logged out
-  const loggedOutUser = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: {
@@ -171,7 +172,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
   };
-  return res
+  res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
