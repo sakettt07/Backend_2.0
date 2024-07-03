@@ -217,34 +217,101 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
-  return res.status(200).json(new ApiResponse(200,"Account details updated successfully"))
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Account details updated successfully"));
 });
 
 // User can also update the files like avatar image,banner image
-const updateUserAvatar=asyncHandler(async(req,res)=>{
-  const avatarLocalPath=req.file?.path;      //path nikal liya new avatar ka
-  if(!avatarLocalPath){
-    throw new ApiError(400,"Avatar file is missing");
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path; //path nikal liya new avatar ka
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
   }
-  const avatar=await uploadOnCloudinary(avatarLocalPath);  //cloudinary p dal diya
+  const avatar = await uploadOnCloudinary(avatarLocalPath); //cloudinary p dal diya
 
-  if(!avatar.url){
+  if (!avatar.url) {
     throw new ApiError(400, "Error while uploading on avatar");
   }
-  const user=await User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set:{
-        avatar:avatar.url
-      }
-    },{
-      new:true
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    {
+      new: true,
     }
-  ).select("-password")
-  return res.status(200).json(new ApiResponse(200,"Avatar image updated"));
-
-})
+  ).select("-password");
+  return res.status(200).json(new ApiResponse(200, "Avatar image updated"));
+});
 //similarly we can update the users cover image
+
+// writing the first aggregation pipeline for the subscriber and channel specificly.
+const getUserChannelprofile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
+  }
+  // pipeline begin from here
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelSubscribedCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project:{
+        fullName:1,
+        email:1,
+        coverImage:1,
+        avatar:1,
+        subscribersCount:1,
+        channelSubscribedCount:1,
+        username:1,
+        isSubscribed:1
+      }
+    }
+  ])
+  if(!channel?.length){
+    throw new ApiError(404,"Channel does not exists");
+  }
+  return res.status(200).json(new ApiResponse(200,channel[0],"User channel fetched successfully"))
+});
 
 // will performing the generate token
 export {
@@ -254,5 +321,5 @@ export {
   changeCurrentPassword,
   currrentUser,
   updateAccountDetails,
-  updateUserAvatar
+  updateUserAvatar,
 };
