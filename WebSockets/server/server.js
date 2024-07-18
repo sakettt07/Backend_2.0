@@ -19,8 +19,22 @@ app.get("/",(req,res)=>{
 })
 
 io.on("connection",(socket)=>{
-    console.log("User connected");
-    console.log("Id",socket.id);
+    console.log("User connected",socket.id);
+    // console.log("Id",socket.id);
+    // socket.emit('welcome','welcome to the server')    //this is to send the msg to all the conections
+    // socket.broadcast.emit("welcome",`${socket.id} joiined the server`)      //this will send the msg to particular curcuit.
+    socket.on("disconnect",()=>{
+        console.log("User Disconnected",socket.id)
+    })
+
+    socket.on("message",({room,message})=>{
+        console.log({room,message});
+        io.to(room).emit("receive-msg",message);
+    })
+    socket.on("join-room",(room)=>{
+        socket.join(room);
+    })
+    
 })
 
 server.listen(port,()=>{
