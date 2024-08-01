@@ -76,20 +76,30 @@ const getUserTweets=asyncHandler(async(req,res)=>{
 })
 const updateTweet=asyncHandler(async(req,res)=>{
 
-    // TODO: get the userid from the params or token
+    // TODO: get the userid from the  token
+    // get the content,get the tweet id from the params.
     // find it in the tweets owner if user exist then change the content
     // return the new data from the tweet
 
     const {content}=req.body;
-    const {userId}=req.params;
-    if(!isValidObjectId(userId)){
-        throw new ApiError(400,"invalid user");
+    const {tweetId}=req.params;
+    if(!isValidObjectId(tweetId)){
+        throw new ApiError(400,"invalid tweet id");
     }
     if(content.trim===""||!content){
         throw new ApiError(402,"write something to update");
     }
 
-    const tweet=await Tweet.findByIdAndUpdate({owner:userId});
+    const tweet=await Tweet.findById(tweetId);
+    if(!tweet){
+        throw new ApiError(400,"tweet not found");
+    }
+    if(tweet.owner.toString()!=userId.tostring()){
+        throw new ApiError(400,"you are not authorised to update the tweet");
+    }
+    tweet.content=content
+    tweet.save();
+    res.status(200).json(new ApiResponse(200,tweet,"tweet updated successsfully"));
 })
 
 export {createTweet,
