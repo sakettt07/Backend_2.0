@@ -37,3 +37,6 @@ The image is of the real time tracker which is made on ejs used leaflet api for 
 
 # Real Time Tracker
 ![image](https://github.com/user-attachments/assets/b7b661e9-452e-42d2-83fa-b836035bdf18)
+
+Checked the APIs on the Postman
+![image](https://github.com/user-attachments/assets/6ea05a03-b9f6-4de1-8527-32830141d5cc)
