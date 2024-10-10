@@ -1,10 +1,11 @@
 // this wil be our main file where we will be importing all the modules and packages.
-import express from "express";
+import express, { json } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
 import { Product } from "./schema.js";
+import NodeCache from "node-cache";
 
 dotenv.config({
   path: ".env",
@@ -17,32 +18,52 @@ mongoose
   .catch((err) => console.log(err));
 
 const app = express();
+const nodeCache = new NodeCache();
+app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
-    res.send("Apis working")
+  res.send("Apis working");
 });
 
 // making all the usefull APIs
-app.get("/allproducts",async(req,res)=>{
+app.get("/allproducts", async (req, res) => {
   try {
-    const products=await Product.find({});
+    let products;
+    if (nodeCache.has("products")) {
+      products = JSON.parse(nodeCache.get("products"));
+    } else {
+      products = await Product.find({});
+      nodeCache.set("products", JSON.stringify(products));
+    }
     res.json({
-      success:true,
-      products
-    })
+      success: true,
+      products,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
+  }
+});
+app.put("/update",async(req,res)=>{
+  try {
+    const product=await Product.findById(req.query.id);
+    product.name=req.body.name;
+    await product.save();
+    
+    // jab update hojaye to delete kardo cache data ko taki new data ye jb fetch hoo.
+    nodeCache.del("products");
+    return res.json({
+      success:true,
+      message:"Updated",
+    });
+    
+  } catch (error) {
+    console.log(error);
   }
 })
-
-
-
-
-
-app.listen(5000,()=>{
-    console.log("Working")
-})
+app.listen(5000, () => {
+  console.log("Working");
+});
 
 // creating a function which will create fake products in the DB.
 
@@ -59,7 +80,7 @@ app.listen(5000,()=>{
 //             updatedAt:new Date(faker.date.recent())
 //         };
 //         products.push(element);
-        
+
 //     }
 //     await Product.create(products);
 //     console.log("Check DB");
