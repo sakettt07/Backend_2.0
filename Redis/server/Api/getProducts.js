@@ -24,7 +24,7 @@ export const getProductDetail = (id) => new Promise((resolve, reject) => {
                 {
                     id: id,
                     name: `product ${id}`,
-                    price: 100
+                    price: Math.ceil(Math.random() *100)
                 },
             ]
         })

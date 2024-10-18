@@ -1,11 +1,12 @@
 // this wil be our main file where we will be importing all the modules and packages.
-import express, { json } from "express";
+import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
 import { Product } from "./schema.js";
 import NodeCache from "node-cache";
+import Redis from "ioredis";
 
 dotenv.config({
   path: ".env",
@@ -18,6 +19,14 @@ mongoose
   .catch((err) => console.log(err));
 
 const app = express();
+
+//Homework using redis instead of node-cache.
+const redis=new Redis({
+  password: 'EMPhc1NUQyQJBegRhEZqEGvlEcMsygVe',
+  host: 'redis-10565.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
+  port: 10565
+});
+// to handle the response time of the API request.
 const nodeCache = new NodeCache();
 app.use(express.json());
 app.use(morgan("dev"));

@@ -1,9 +1,11 @@
 import express from "express";
 import { getProductDetail, getProducts } from "./Api/getProducts.js";
 import Redis from "ioredis";
+import { getCachedData } from "./middlewares/redis.middleware.js";
+import { apiRequest } from "./middlewares/apiRequest.middleware.js";
 
 const app=express();
-const redis=new Redis({
+export const redis=new Redis({
     password: 'EMPhc1NUQyQJBegRhEZqEGvlEcMsygVe',
     host: 'redis-10565.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
     port: 10565
@@ -14,27 +16,29 @@ redis.on("connect",()=>{
 
 
 
-
-app.get("/",(req,res)=>{
+// we can make a request counting method also in this.
+//we will be getting the address of the as 1 because the server and the client are on the same machine.
+app.get("/",apiRequest(), async(req,res)=>{
     res.send("Hey you are working bery hard for your project");
 })
 // api to get all the products..
 
-app.get("/products",async(req,res)=>{
+app.get("/products",getCachedData("products"), async(req,res)=>{
 
     // if products are present in the redis DB then it will be fetched 
-    let products=await redis.get("products");
+    // let products=await redis.get("products");
 
-    if(products){
+    // if(products){
 
-        return res.json({
-            products:JSON.parse(products),
-            message:"Products fetched"
-        })
-    }
+    //     return res.json({
+    //         products:JSON.parse(products),
+    //         message:"Products fetched"
+    //     })
+    // }
     // if it does not exist then it will be saved then fetched
-    products=await getProducts();
-    await redis.set("products",JSON.stringify(products.products));
+
+    const products=await getProducts();
+    // await redis.set("products",JSON.stringify(products.products));
 
 
     // we cab us the setx method to set the data for a specific timeperiod.
@@ -81,6 +85,15 @@ app.get("/product/:id", async (req, res) => {
     }
 });
 
+// API to delete an order if we are handling the stock type change.
+app.get("/order/:id",async(req, res)=>{
+    const orderId=req.params.id;
+    const key=`product:${orderId}`;
+    await redis.del(key);  // delete the order from the database if it exists already.
+    return res.json({
+        message:`Order ${orderId} details deleted successfully`
+    })
+})
 
 
 app.listen(4000,(req,res)=>{
