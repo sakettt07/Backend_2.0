@@ -3,29 +3,31 @@ import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import { faker } from "@faker-js/faker";
+// import { faker } from "@faker-js/faker";
+// used the above package for generating the fake products.
 import { Product } from "./schema.js";
 import NodeCache from "node-cache";
 import Redis from "ioredis";
+import { getCachedData } from "./middlewares/redis.middleware.js";
 
 dotenv.config({
   path: ".env",
 });
-mongoose
-  .connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI, {
     dbName: "FastApi",
-  })
-  .then((c) => console.log("Databse Connected"))
-  .catch((err) => console.log(err));
+  }).then((c) => console.log("Databse Connected")).catch((err) => console.log(err));
 
 const app = express();
 
 //Homework using redis instead of node-cache.
-const redis=new Redis({
-  password: 'EMPhc1NUQyQJBegRhEZqEGvlEcMsygVe',
-  host: 'redis-10565.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
-  port: 10565
+export const redis=new Redis({
+  password: process.env.PASSWORD,
+  host: process.env.HOST,
+  port: process.env.PORT
 });
+redis.on("connect",()=>{
+  console.log("Redis is connected");
+})
 // to handle the response time of the API request.
 const nodeCache = new NodeCache();
 app.use(express.json());
@@ -36,19 +38,28 @@ app.get("/", (req, res) => {
 });
 
 // making all the usefull APIs
-app.get("/allproducts", async (req, res) => {
+app.get("/allproducts",getCachedData("products"), async (req, res) => {
   try {
-    let products;
-    if (nodeCache.has("products")) {
-      products = JSON.parse(nodeCache.get("products"));
-    } else {
-      products = await Product.find({});
-      nodeCache.set("products", JSON.stringify(products));
-    }
+    // let products;
+    // if (nodeCache.has("products")) {
+    //   products = JSON.parse(nodeCache.get("products"));
+    // } else {
+    //   products = await Product.find({});
+    //   nodeCache.set("products", JSON.stringify(products));
+    // }
+    // res.json({
+    //   success: true,
+    //   products,
+    // });
+
+    // *******************************// 
+    // the above was the node-cache part now converting it to redis
+    const products=await Product.find({});
+    await redis.set("products",JSON.stringify(products),'EX',3600);
     res.json({
-      success: true,
-      products,
-    });
+        products,
+    })
+    // the above is a method of fetching the more faster
   } catch (error) {
     console.log(error);
   }
